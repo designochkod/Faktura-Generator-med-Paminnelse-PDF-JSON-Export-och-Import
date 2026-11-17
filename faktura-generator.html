@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fakturagenerator</title>
+<style>
+:root {
+--bg: #f4f6f9;
+--panel: #ffffff;
+--accent: #0066cc;
+--accent-hover: #0052a3;
+--text: #222222;
+--border: #dddddd;
+--danger: #cc0000;
+}
+body {
+font-family: system-ui, Arial, sans-serif;
+margin: 0;
+padding: 0;
+background-color: var(--bg);
+color: var(--text);
+display: flex;
+height: 100vh;
+overflow: hidden;
+}
+.container {
+display: flex;
+width: 100%;
+height: 100%;
+& .panel {
+width: 420px;
+box-sizing: border-box;
+background-color: var(--panel);
+border-right: 1px solid var(--border);
+padding: 20px;
+display: flex;
+flex-direction: column;
+gap: 20px;
+box-shadow: 2px 0 10px rgba(0,0,0,0.05);
+z-index: 10;
+overflow-y: auto;
+& h1 {
+font-size: 1.4rem;
+margin: 0;
+}
+& .section {
+display: flex;
+flex-direction: column;
+gap: 12px;
+border-top: 1px solid var(--border);
+padding-top: 16px;
+&.section-push {
+margin-top: auto;
+}
+& h2 {
+font-size: 1rem;
+margin: 0;
+}
+& .form-group {
+display: flex;
+flex-direction: column;
+gap: 4px;
+font-size: 0.85rem;
+& input, & textarea, & select {
+width: 100%;
+box-sizing: border-box;
+padding: 8px;
+border: 1px solid var(--border);
+border-radius: 4px;
+font-family: inherit;
+}}}
+& .grid-header {
+display: grid;
+grid-template-columns: 50px 100px 1fr 75px 25px;
+gap: 6px;
+font-size: 0.75rem;
+font-weight: bold;
+margin-bottom: -6px;
+padding-right: 4px;
+}
+& #itemRows {
+display: flex;
+flex-direction: column;
+gap: 12px;
+}
+& .action-flex {
+display: flex;
+gap: 10px;
+margin-bottom: 12px;
+& button {
+flex: 1;
+}}
+& .btn-secondary {
+background-color: #f0f0f0;
+color: var(--text);
+border: 1px solid var(--border);
+padding: 8px;
+border-radius: 4px;
+cursor: pointer;
+font-size: 0.85rem;
+margin-top: 4px;
+&:hover {
+background-color: #e5e5e5;
+}}
+& .btn-primary {
+background-color: var(--accent);
+color: white;
+border: none;
+padding: 12px;
+border-radius: 4px;
+font-weight: bold;
+cursor: pointer;
+width: 100%;
+box-sizing: border-box;
+&:hover {
+background-color: var(--accent-hover);
+}}
+& .grid-row-container {
+display: flex;
+flex-direction: column;
+gap: 6px;
+background-color: #f8fafc;
+padding: 10px;
+border: 1px solid var(--border);
+border-radius: 6px;
+&.reminder-row {
+border-color: rgba(204, 0, 0, 0.3);
+background-color: rgba(204, 0, 0, 0.02);
+}}
+& .grid-row-top {
+display: grid;
+grid-template-columns: 50px 100px 1fr 75px 25px;
+gap: 6px;
+align-items: center;
+& input, & select {
+width: 100%;
+box-sizing: border-box;
+padding: 6px 4px;
+border: 1px solid var(--border);
+border-radius: 4px;
+font-size: 0.8rem;
+}
+& button {
+background-color: transparent;
+color: var(--danger);
+border: none;
+font-weight: bold;
+cursor: pointer;
+font-size: 1.2rem;
+padding: 0;
+text-align: center;
+}}
+& .grid-row-bottom {
+width: 100%;
+& textarea {
+width: 100%;
+box-sizing: border-box;
+padding: 6px 8px;
+border: 1px solid var(--border);
+border-radius: 4px;
+font-size: 0.8rem;
+font-family: inherit;
+resize: vertical;
+}}}
+& .preview {
+flex: 1;
+display: flex;
+align-items: flex-start;
+justify-content: center;
+padding: 40px;
+overflow-y: auto;
+background-color: #e0e4ec;
+& #invoice {
+width: 210mm;
+min-height: 297mm;
+background-color: white;
+box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+box-sizing: border-box;
+padding: 20mm;
+display: flex;
+flex-direction: column;
+font-size: 14px;
+line-height: 1.4;
+color: #000;
+& .invoice-header {
+display: flex;
+justify-content: space-between;
+align-items: flex-start;
+margin-bottom: 40px;
+& .logo-box {
+max-width: 200px;
+max-height: 80px;
+display: none;
+& img { max-width: 100%; max-height: 80px; object-fit: contain; }
+}
+& .sender-box { white-space: pre-line; }
+& .meta-box {
+text-align: right;
+& h2 { margin: 0; font-size: 2rem; color: #333; }
+& div { margin-top: 8px; }
+}}
+& .invoice-recipient {
+margin-bottom: 40px;
+& h3 { margin: 0 0 8px 0; font-size: 1rem; border-bottom: 1px solid #000; padding-bottom: 4px; }
+& div { white-space: pre-line; }
+}
+& table {
+width: 100%;
+border-collapse: collapse;
+text-align: left;
+margin-bottom: 40px;
+& thead tr { border-bottom: 2px solid #000; font-size: 0.9rem; }
+& th {
+padding: 8px 4px;
+&.col-id { width: 50px; }
+&.col-type { width: 80px; }
+&.col-vat { width: 60px; text-align: right; }
+&.col-price { width: 100px; text-align: right; }
+}}
+& .invoice-footer-grid {
+margin-top: auto;
+display: grid;
+grid-template-columns: 1fr 280px;
+gap: 40px;
+align-items: flex-end;
+page-break-inside: avoid;
+& .payment-info-box {
+display: flex;
+flex-direction: column;
+gap: 16px;
+font-size: 0.85rem;
+& .payment-group-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; border-bottom: 1px solid #eee; padding-bottom: 6px; }
+& .payment-group-sub { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; border-bottom: 1px solid #eee; padding-bottom: 6px; }
+& label { font-weight: bold; display: block; margin-bottom: 2px; text-transform: uppercase; font-size: 0.75rem; color: #555; }
+}
+& .summary-box {
+display: flex;
+flex-direction: column;
+gap: 6px;
+font-size: 0.95rem;
+& .summary-row { display: flex; justify-content: space-between; border-bottom: 1px solid #eee; padding-bottom: 4px; }
+& .summary-total { display: flex; justify-content: space-between; font-weight: bold; font-size: 1.1rem; border-top: 1px solid #000; padding-top: 6px; }
+}}}}}
+@media print {
+body { background: #ffffff; color: #000000; overflow: visible; height: auto; }
+body .container .panel { display: none; }
+body .container .preview { padding: 0; overflow: visible; background: #ffffff; display: block; }
+body .container .preview #invoice { width: 100%; box-shadow: none; padding: 0; margin: 0; min-height: 0; display: block; }
+body .container .preview #invoice .invoice-footer-grid { margin-top: 60px; display: grid; }
+}
+</style>
+</head>
+<body>
+<div class="container">
+<div class="panel">
+<h1>Fakturagenerator</h1>
+<div class="section">
+<h2>Logotyp</h2>
+<div class="form-group">
+<input type="file" id="logoInput" accept="image/*">
+</div>
+</div>
+<div class="section">
+<h2>Avsändare & Mottagare</h2>
+<div class="form-group">
+<label>Fakturanummer</label>
+<input type="text" id="inputInvNo" value="1001">
+</div>
+<div class="form-group">
+<label>Avsändare (Företagsnamn, adress...)</label>
+<textarea id="inputSender" rows="3">Mitt Företag AB&#10;Gatan 1&#10;123 45 Stad</textarea>
+</div>
+<div class="form-group">
+<label>Mottagare (Kundnamn, adress...)</label>
+<textarea id="inputReceiver" rows="3">Kund AB&#10;Kundvägen 2&#10;543 21 Stad</textarea>
+</div>
+</div>
+<div class="section">
+<h2>Valuta</h2>
+<div class="form-group">
+<label>Välj fakturavaluta</label>
+<select id="currencySelect">
+<option value="SEK">SEK (kr)</option>
+<option value="EUR">EUR (€)</option>
+<option value="USD">USD ($)</option>
+</select>
+</div>
+</div>
+<div class="section">
+<h2>Betalningsuppgifter</h2>
+<div class="form-group">
+<label>Bankgiro</label>
+<input type="text" id="inputBG" value="5555-5555">
+</div>
+<div class="form-group">
+<label>PlusGiro</label>
+<input type="text" id="inputPG" value="11 22 33-4">
+</div>
+<div class="form-group">
+<label>Bankkonto</label>
+<input type="text" id="inputAccount" value="Swedbank 8327-9, 923 456 789-0">
+</div>
+<div class="form-group">
+<label>OCR-nummer</label>
+<input type="text" id="inputOCR" value="202610014">
+</div>
+<div class="form-group">
+<label>Förfallodatum</label>
+<input type="text" id="inputDueDate" value="">
+</div>
+</div>
+<div class="section">
+<h2>Fakturarader</h2>
+<div class="grid-header">
+<div>ID</div>
+<div>Typ</div>
+<div>Pris</div>
+<div>Moms</div>
+<div></div>
+</div>
+<div id="itemRows"></div>
+<div class="action-flex" style="margin-top:8px;">
+<button class="btn-secondary" id="btnAddRow">+ Lägg till rad</button>
+<button class="btn-secondary" id="btnAddReminder" style="color:var(--danger); border-color:rgba(204,0,0,0.3);">+ Påminnelse</button>
+</div>
+</div>
+<div class="section section-push">
+<div class="action-flex">
+<button class="btn-secondary" id="btnExport">Exportera JSON</button>
+<button class="btn-secondary" id="btnImport">Importera JSON</button>
+<input type="file" id="importFile" accept=".json" style="display: none;">
+</div>
+<div class="action-flex">
+<button class="btn-secondary" id="btnReset">Återställ</button>
+</div>
+<button class="btn-primary" id="btnPrint">Skriv ut / Spara PDF</button>
+</div>
+</div>
+<div class="preview">
+<div id="invoice">
+<div class="invoice-header">
+<div id="invoiceLogoContainer" class="logo-box">
+<img id="invoiceLogo" src="">
+</div>
+<div id="invoiceSenderDisplay" class="sender-box"></div>
+<div class="meta-box">
+<h2>FAKTURA</h2>
+<div><strong>Fakturanummer:</strong> <span id="invoiceNoDisplay"></span></div>
+</div>
+</div>
+<div class="invoice-recipient">
+<h3>Faktureras till</h3>
+<div id="invoiceReceiverDisplay"></div>
+</div>
+<table>
+<thead>
+<tr>
+<th class="col-id">ID</th>
+<th class="col-type">Typ</th>
+<th>Beskrivning</th>
+<th class="col-vat">Moms</th>
+<th class="col-price">Pris</th>
+</tr>
+</thead>
+<tbody id="invoiceTableBody"></tbody>
+</table>
+<div class="invoice-footer-grid">
+<div class="payment-info-box">
+<div class="payment-group-row">
+<div><label>Bankgiro</label><span id="displayBG"></span></div>
+<div><label>PlusGiro</label><span id="displayPG"></span></div>
+<div><label>Bankkonto</label><span id="displayAccount"></span></div>
+</div>
+<div class="payment-group-sub">
+<div><label>OCR / Ref.nr</label><span id="displayOCR"></span></div>
+<div><label>Förfallodatum</label><span id="displayDueDate"></span></div>
+</div>
+</div>
+<div class="summary-box">
+<div class="summary-row">
+<span>Subtotal:</span>
+<span id="displaySubtotal">0,00 kr</span>
+</div>
+<div id="taxSummaryContainer"></div>
+<div class="summary-total">
+<span>Total:</span>
+<span id="displayTotal">0,00 kr</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<script>
+const elements = {
+logoInput: document.getElementById('logoInput'),
+invoiceLogoContainer: document.getElementById('invoiceLogoContainer'),
+invoiceLogo: document.getElementById('invoiceLogo'),
+inputInvNo: document.getElementById('inputInvNo'),
+inputSender: document.getElementById('inputSender'),
+inputReceiver: document.getElementById('inputReceiver'),
+currencySelect: document.getElementById('currencySelect'),
+inputBG: document.getElementById('inputBG'),
+inputPG: document.getElementById('inputPG'),
+inputAccount: document.getElementById('inputAccount'),
+inputOCR: document.getElementById('inputOCR'),
+inputDueDate: document.getElementById('inputDueDate'),
+invoiceNoDisplay: document.getElementById('invoiceNoDisplay'),
+invoiceSenderDisplay: document.getElementById('invoiceSenderDisplay'),
+invoiceReceiverDisplay: document.getElementById('invoiceReceiverDisplay'),
+displayBG: document.getElementById('displayBG'),
+displayPG: document.getElementById('displayPG'),
+displayAccount: document.getElementById('displayAccount'),
+displayOCR: document.getElementById('displayOCR'),
+displayDueDate: document.getElementById('displayDueDate'),
+itemRows: document.getElementById('itemRows'),
+btnAddRow: document.getElementById('btnAddRow'),
+btnAddReminder: document.getElementById('btnAddReminder'),
+invoiceTableBody: document.getElementById('invoiceTableBody'),
+displaySubtotal: document.getElementById('displaySubtotal'),
+taxSummaryContainer: document.getElementById('taxSummaryContainer'),
+displayTotal: document.getElementById('displayTotal'),
+btnPrint: document.getElementById('btnPrint'),
+btnExport: document.getElementById('btnExport'),
+btnImport: document.getElementById('btnImport'),
+importFile: document.getElementById('importFile'),
+btnReset: document.getElementById('btnReset')
+};
+const formatValue = (value, code) => {
+const config = {
+SEK: { style: 'currency', currency: 'SEK' },
+EUR: { style: 'currency', currency: 'EUR' },
+USD: { style: 'currency', currency: 'USD' }
+};
+return new Intl.NumberFormat('sv-SE', config[code]).format(value);
+};
+const getWorkingDaysAhead = (days) => {
+let date = new Date();
+let count = 0;
+while (count < days) {
+date.setDate(date.getDate() + 1);
+let day = date.getDay();
+if (day !== 0 && day !== 6) {
+count++;
+}}
+return date.toISOString().split('T')[0];
+};
+elements.logoInput.addEventListener('change', (e) => {
+if (e.target.files.length > 0) {
+const reader = new FileReader();
+reader.onload = (event) => {
+elements.invoiceLogo.src = event.target.result;
+elements.invoiceLogoContainer.style.display = 'block';
+};
+reader.readAsDataURL(e.target.files[0]);
+}});
+const updateTextDisplays = () => {
+elements.invoiceNoDisplay.textContent = elements.inputInvNo.value;
+elements.invoiceSenderDisplay.textContent = elements.inputSender.value;
+elements.invoiceReceiverDisplay.textContent = elements.inputReceiver.value;
+elements.displayBG.textContent = elements.inputBG.value;
+elements.displayPG.textContent = elements.inputPG.value;
+elements.displayAccount.textContent = elements.inputAccount.value;
+elements.displayOCR.textContent = elements.inputOCR.value;
+elements.displayDueDate.textContent = elements.inputDueDate.value;
+};
+['inputInvNo', 'inputSender', 'inputReceiver', 'inputBG', 'inputPG', 'inputAccount', 'inputOCR', 'inputDueDate'].forEach(id => {
+elements[id].addEventListener('input', updateTextDisplays);
+});
+elements.currencySelect.addEventListener('change', () => calculateInvoice());
+const createRow = (id = '', type = '', desc = '', price = '', vat = '0.25', isReminder = false) => {
+const container = document.createElement('div');
+container.className = isReminder ? 'grid-row-container reminder-row' : 'grid-row-container';
+container.dataset.isReminder = isReminder;
+if (isReminder) {
+container.innerHTML = `
+<div class="grid-row-top">
+<input type="text" class="row-id" value="${id}" readonly>
+<input type="text" class="row-type" value="${type}" readonly>
+<input type="number" class="row-price" value="${price}" readonly>
+<select class="row-vat" disabled>
+<option value="0.00" selected>0%</option>
+</select>
+<button class="btn-delete">&times;</button>
+</div>
+<div class="grid-row-bottom">
+<textarea class="row-desc" rows="2" readonly>${desc}</textarea>
+</div>
+`;
+} else {
+container.innerHTML = `
+<div class="grid-row-top">
+<input type="text" class="row-id" value="${id}">
+<input type="text" class="row-type" value="${type}">
+<input type="number" class="row-price" value="${price}" step="0.01">
+<select class="row-vat">
+<option value="0.25" ${vat==='0.25'?'selected':''}>25%</option>
+<option value="0.12" ${vat==='0.12'?'selected':''}>12%</option>
+<option value="0.06" ${vat==='0.06'?'selected':''}>6%</option>
+<option value="0.00" ${vat==='0.00'?'selected':''}>0%</option>
+</select>
+<button class="btn-delete">&times;</button>
+</div>
+<div class="grid-row-bottom">
+<textarea class="row-desc" rows="2" placeholder="Skriv en längre beskrivning här...">${desc}</textarea>
+</div>
+`;
+}
+container.querySelector('.btn-delete').addEventListener('click', () => {
+container.remove();
+calculateInvoice();
+});
+container.querySelectorAll('input, select, textarea').forEach(el => {
+el.addEventListener('input', calculateInvoice);
+});    
+elements.itemRows.appendChild(container);
+calculateInvoice();
+};
+elements.btnAddRow.addEventListener('click', () => createRow('', '', '', '', '0.25', false));
+elements.btnAddReminder.addEventListener('click', () => createRow('Pån', 'Avgift', 'Lagstadgad påminnelseavgift.', '250', '0.00', true));
+function calculateInvoice() {
+let subtotal = 0;
+const taxMap = { '0.25': 0, '0.12': 0, '0.06': 0, '0.00': 0 };
+elements.invoiceTableBody.innerHTML = '';
+const cCode = elements.currencySelect.value;
+const containers = elements.itemRows.querySelectorAll('.grid-row-container');
+containers.forEach(container => {
+const id = container.querySelector('.row-id').value;
+const type = container.querySelector('.row-type').value;
+const desc = container.querySelector('.row-desc').value;
+const price = parseFloat(container.querySelector('.row-price').value) || 0;
+const isReminder = container.dataset.isReminder === 'true';
+const vatRate = isReminder ? '0.00' : container.querySelector('.row-vat').value;
+subtotal += price;
+taxMap[vatRate] += (price * parseFloat(vatRate));        
+const tr = document.createElement('tr');
+tr.style.borderBottom = '1px solid #eee';
+tr.style.fontSize = '0.9rem';
+if (isReminder) {
+tr.style.color = 'var(--danger)';
+}
+tr.innerHTML = `
+<td style="padding:8px 4px; vertical-align: top;">${id}</td>
+<td style="padding:8px 4px; vertical-align: top;">${type}</td>
+<td style="padding:8px 4px; white-space: pre-wrap; vertical-align: top;">${desc}</td>
+<td style="padding:8px 4px; text-align:right; vertical-align: top;">${parseFloat(vatRate)*100}%</td>
+<td style="padding:8px 4px; text-align:right; vertical-align: top;">${formatValue(price, cCode)}</td>
+`;
+elements.invoiceTableBody.appendChild(tr);
+});
+elements.taxSummaryContainer.innerHTML = '';
+let totalTax = 0;
+Object.keys(taxMap).forEach(rate => {
+const taxValue = taxMap[rate];
+if (taxValue > 0) {
+totalTax += taxValue;
+const taxRow = document.createElement('div');
+taxRow.className = 'summary-row';
+taxRow.innerHTML = `<span>Moms (${parseFloat(rate)*100}%):</span><span>${formatValue(taxValue, cCode)}</span>`;
+elements.taxSummaryContainer.appendChild(taxRow);
+}});
+if (elements.taxSummaryContainer.children.length === 0) {
+elements.taxSummaryContainer.innerHTML = `<div class="summary-row"><span>Moms (0%):</span><span>${formatValue(0, cCode)}</span></div>`;
+}
+const total = subtotal + totalTax;
+elements.displaySubtotal.textContent = formatValue(subtotal, cCode);
+elements.displayTotal.textContent = formatValue(total, cCode);
+}
+elements.btnExport.addEventListener('click', () => {
+const rowsData = [];
+elements.itemRows.querySelectorAll('.grid-row-container').forEach(c => {
+rowsData.push({
+id: c.querySelector('.row-id').value,
+type: c.querySelector('.row-type').value,
+price: c.querySelector('.row-price').value,
+vat: c.dataset.isReminder === 'true' ? '0.00' : c.querySelector('.row-vat').value,
+desc: c.querySelector('.row-desc').value,
+isReminder: c.dataset.isReminder === 'true'
+});
+});
+const data = {
+invoiceNo: elements.inputInvNo.value,
+sender: elements.inputSender.value,
+receiver: elements.inputReceiver.value,
+currency: elements.currencySelect.value,
+bg: elements.inputBG.value,
+pg: elements.inputPG.value,
+account: elements.inputAccount.value,
+ocr: elements.inputOCR.value,
+dueDate: elements.inputDueDate.value,
+rows: rowsData
+};
+const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+const url = URL.createObjectURL(blob);
+const a = document.createElement('a');
+a.href = url;
+a.download = `faktura_${elements.inputInvNo.value || 'data'}.json`;
+a.click();
+URL.revokeObjectURL(url);
+});
+elements.btnImport.addEventListener('click', () => elements.importFile.click());
+elements.importFile.addEventListener('change', (e) => {
+if (e.target.files.length > 0) {
+const reader = new FileReader();
+reader.onload = (event) => {
+try {
+const data = JSON.parse(event.target.result);
+elements.inputInvNo.value = data.invoiceNo || '';
+elements.inputSender.value = data.sender || '';
+elements.inputReceiver.value = data.receiver || '';
+elements.currencySelect.value = data.currency || 'SEK';
+elements.inputBG.value = data.bg || '';
+elements.inputPG.value = data.pg || '';
+elements.inputAccount.value = data.account || '';
+elements.inputOCR.value = data.ocr || '';
+elements.inputDueDate.value = data.dueDate || '';
+elements.itemRows.innerHTML = '';
+if (Array.isArray(data.rows)) {
+data.rows.forEach(r => createRow(r.id, r.type, r.desc, r.price, r.vat, r.isReminder || false));
+}
+updateTextDisplays();
+calculateInvoice();
+} catch (err) {
+alert('Felaktig JSON-fil.');
+}};
+reader.readAsText(e.target.files[0]);
+e.target.value = '';
+}});
+const setDefaultValues = () => {
+elements.logoInput.value = '';
+elements.invoiceLogo.src = '';
+elements.invoiceLogoContainer.style.display = 'none';
+elements.inputInvNo.value = '1001';
+elements.inputSender.value = 'Mitt Företag AB\nGatan 1\n123 45 Stad';
+elements.inputReceiver.value = 'Kund AB\nKundvägen 2\n543 21 Stad';
+elements.currencySelect.value = 'SEK';
+elements.inputBG.value = '5555-5555';
+elements.inputPG.value = '11 22 33-4';
+elements.inputAccount.value = 'Swedbank 8327-9, 923 456 789-0';
+elements.inputOCR.value = '202610014';
+elements.inputDueDate.value = getWorkingDaysAhead(20);
+elements.itemRows.innerHTML = '';
+createRow('1', 'Tjänst', 'Webbutveckling\nAnpassat administrationsgränssnitt samt API-kopplingar.', '5000', '0.25', false);
+createRow('2', 'Produkt', 'Programvarulicens', '1500', '0.12', false);
+updateTextDisplays();
+};
+elements.btnReset.addEventListener('click', setDefaultValues);
+elements.btnPrint.addEventListener('click', () => window.print());
+setDefaultValues();
+</script>
+</body>
+</html>
